@@ -1,0 +1,41 @@
+# pore with attractive nanoparticles simulation
+
+read_restart	nano.restart.18200000
+
+neighbor 	1.8 bin
+neigh_modify	one 3000
+
+fix		1 chains nve/limit 0.1
+fix		2 nano nve/limit 0.1
+fix		3 moving langevin 1.0 1.0 1.0 699425 scale 4 36.0 scale 5 16.0
+fix		ztop nano1 wall/reflect zhi EDGE
+fix		zbot nano2 wall/reflect zlo EDGE
+
+#fix		6 nano1 ave/histo 100 100 10000 -70.0 70.0 140 z mode vector ave running overwrite file hist_nano1.txt
+#fix		7 nano2 ave/histo 100 100 10000 -70.0 70.0 140 z mode vector ave running overwrite file hist_nano2.txt
+
+fix		flux nano1 flux/boundary 1 z -1 35 flux_nano1.txt
+fix		flux2 nano2 flux/boundary 1 z 1 35 flux_nano2.txt
+
+fix		fluxbrush1 nano1 flux/plane 1 z 43.5 0 nano1_flux_brush_s.txt 0.1
+fix		fluxbrush2 nano2 flux/plane 1 z -43.5 0 nano2_flux_brush_s.txt 0.1
+fix 		en_prob1 nano1 passage 1 z 43.5 43.5 17 nano1_entrance_pore_s.txt 0.1
+fix		en_prob2 nano2 passage 1 z -43.5 -43.5 -18 nano2_entrance_pore_s.txt 0.1
+fix		ex_prob1 nano1 passage 1 z 17 43.5 -43.5 nano1_exit_pore_s.txt 0.1
+fix		ex_prob2 nano2 passage 1 z -18 -43.5 43.5 nano2_exit_pore_s.txt 0.1
+
+timestep	0.012
+
+restart		100000 nano.restart 
+dump 		pos all custom 100000 nano_*.txt id type x y z
+dump		mov all image 100000 nano_*.jpeg type type
+dump_modify	mov adiam 3 5.0
+dump_modify	mov adiam 4 6.0
+dump_modify	mov adiam 5 4.0
+dump_modify	pos sort id
+
+run_style	verlet
+run		17000000
+
+
+

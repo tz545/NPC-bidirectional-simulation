@@ -1,0 +1,66 @@
+# pore with attractive nanoparticles simulation
+
+units 		lj
+
+dimension 	3
+
+boundary 	p p p
+
+atom_style	bond
+
+read_data	data.nano
+
+neighbor 	1.8 bin
+neigh_modify	one 3000
+
+group		attachments1 id 1:12601:200
+group		attachments2 id 12801:22201:200
+group 		nups1 type 1
+group		nups2 type 2
+group 		nups union nups1 nups2
+group		attachments union attachments1 attachments2
+group		chains subtract nups attachments
+group		nano type 4
+group		moving union nano chains 
+
+fix		1 chains nve/limit 0.1
+fix		2 nano nve/limit 0.1
+fix		3 moving langevin 1.0 1.0 1.0 699425 scale 4 36.0
+fix		ztop nano wall/reflect zhi EDGE
+
+
+special_bonds	fene
+bond_style	fene
+bond_coeff	1 30.0 1.5 1.0 1.0
+bond_coeff	2 30.0 1.5 1.0 1.0
+
+pair_style	lj/special 1.0
+pair_coeff	1 1 1.0 1.0 0.3 1.0 0.0 2.5
+pair_coeff	1 2 1.0 1.0 0.4 1.0 0.0 2.5
+pair_coeff	1 3 1.0 3.0 0.0 1.0 2.0 3.0
+pair_coeff	1 4 1.0 3.5 0.95 1.0 2.5 6.0
+pair_coeff	2 2 1.0 1.0 0.5 1.0 0.0 2.5
+pair_coeff	2 3 1.0 3.0 0.0 1.0 2.0 3.0
+pair_coeff	2 4 1.0 3.5 0.95 1.0 2.5 6.0
+pair_coeff	3 3 0.0 5.0 0.0 5.0 0.0 0.0
+pair_coeff 	3 4 1.0 5.5 0.0 5.0 0.5 5.5
+pair_coeff	4 4 1.0 6.0 0.0 6.0 0.0 6.0
+
+timestep	0.012
+
+run_style	verlet
+run 		7000000
+
+#fix		6 nano ave/histo 100 100 10000 -70.0 70.0 140 z mode vector ave running overwrite file hist_nano.txt
+fix		flux nano flux/boundary 1 z -1 35 flux_nano.txt
+
+restart	100000 nano.restart 
+dump 		pos all custom 100000 nano_*.txt id type x y z
+dump		mov all image 100000 nano_*.jpeg type type
+dump_modify	mov adiam 3 5.0
+dump_modify	mov adiam 4 6.0
+
+run		9000000
+
+
+
